@@ -16,8 +16,9 @@ For example, this command train a RLogic on family dataset using gpu 0
   python main.py --train --test --recur --get_rule --data family --topk 2400 --gpu 0
 ```
 Each parameter means:
-```
-* --train
---test
-
-```
+* --train: train the model
+* --test: assign score to each rule in the rule space
+* --recur: learn rules in recursive way 
+* --get_rule: output the learned rules
+* --data: dataset
+* --topk: number of the output rules
