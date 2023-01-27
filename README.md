@@ -11,11 +11,13 @@ The official Pytorch implementation of the paper [RLogic: Recursive Logical Rule
 * test.txt: the learned ryles is evaluated on this data set for KG completion task
 
 ## Usage
-For example, this command train a RLogic on family dataset 
+For example, this command train a RLogic on family dataset using gpu 0
 ```
-  python main.py family 0 family_model TransE 8 0.0 0.2
+  python main.py --train --test --recur --get_rule --data family --topk 2400 --gpu 0
 ```
 Each parameter means:
 ```
-  python run.py DATASET CUDA SAVE_MODEL_NAME BASIC_KGE_MODEL INTER NOISE_THRESHOLD TOP_K_THRESHOLD IS_INIT
+* --train
+--test
+
 ```
