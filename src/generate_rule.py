@@ -143,31 +143,4 @@ def generate_rules(args, dataset):
                     f.write(rule + '\n')
     return
 
-      
-
-if __name__ == '__main__':
-    msg = "First Order Logic Rule Mining"
-    print_msg(msg)
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--data", default="fb15k-237", help="increase output verbosity")
-    parser.add_argument("--topk", type=int, default=5, help="increase output verbosity")
-    parser.add_argument("--phb", action="store_true", help="generate prob matrix phb")
-    parser.add_argument("--gpu", type=int, default=1, help="increase output verbosity")
-    args = parser.parse_args()
-
-    if torch.cuda.is_available():
-        torch.cuda.set_device(args.gpu)
-
-    # DataSet
-    data_path = '../datasets/{}/'.format(args.data)
-    dataset = Dataset(data_root=data_path, inv=True)
-    print("Dataset:{}".format(data_path)) 
-
-    if args.phb:
-        print_msg(" Generate phb matrix ")
-        generate_phb_matrix(args, dataset)
-
-
-    print_msg(" Generate {} Rules For each Head".format(args.topk))
-    generate_rules(args, dataset)
 

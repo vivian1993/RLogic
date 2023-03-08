@@ -264,10 +264,3 @@ def enumerate_body(relation_num, body_len, rdict):
         all_body.append(b_)
     return all_body_idx, all_body
 
-
-if __name__ == "__main__":
-    # Load data from *.txt
-    dataset_name = ["fb15k-237", "family"]
-    dataset = Dataset(data_root='/Users/leo/PycharmProjects/Logic/datasets/{}/'.format(dataset_name[1]), inv=True)
-    fact_rdf = dataset.fact_rdf
-    print(fact_rdf[26347-1])

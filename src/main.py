@@ -55,8 +55,6 @@ def train(args, dataset):
     entity2desced = construct_descendant(fact_rdf)
     relation_num = rdict.__len__()
     head_rel_num = head_rdict.__len__()
-    print ("relation_num",relation_num)
-    print ("head_rel_num",head_rel_num)
     # Sample training data
     max_path_len = 5
     anchor_num = 10000
@@ -175,16 +173,12 @@ def test(args, dataset):
     rnn.eval()    
     #body_list = ['brother|bro|brother|daughter'] 
     r_num = head_rdict.__len__()-1
-    #_, body_2 = enumerate_body(r_num, head_rdict, body_len=2)
+
     _, body_3 = enumerate_body(r_num, head_rdict, body_len=3)
-    #_, body_4 = enumerate_body(r_num, head_rdict, body_len=4)
-    _, body_5 = enumerate_body(r_num, head_rdict, body_len=5)
-    #body = body_2 #+ body_3 + body_4
     body = body_3
     body_list = ["|".join(b) for b in body]
     for bi, body in enumerate(body_list):
         body_idx = body2idx(body, head_rdict) 
-        #print_msg("body:{} ".format(body))
         prob_body = 1
         if bi % (10000) == 0:
             print("## body {}".format(bi))
@@ -197,13 +191,10 @@ def test(args, dataset):
                 cur_ = body_idx[i_]
                 next_ = body_idx[i_+1]
                 inputs = torch.LongTensor([[cur_]]).to(device)
-                #inputs = torch.LongTensor([[cur_]])
                 pred_body, out, states = rnn(inputs, states)
                 prob_ = torch.softmax(pred_body.squeeze(0), dim=0).tolist()
-                #print(head_rdict.idx2rel[np.argmax(prob_)])
                 prob_ = prob_[next_]
                 prob_body = prob_body * prob_
-            #print("prob of body:{:.3f}".format(prob_body))
             """
             Head
             """
@@ -212,8 +203,7 @@ def test(args, dataset):
                 pred_head = rnn.predict_head_recursive(inputs)
             else:
                 pred_head = rnn.predict_head(inputs)
-            #prob_ = torch.sigmoid(pred_head.squeeze(0)).tolist()
-            #prob_ = torch.softmax(pred_head.squeeze(0), dim=0).tolist()
+
             #Take intermediate inv_relation to zero
             prob_ = pred_head.squeeze(0).tolist()
             for i_, p_ in enumerate(prob_):
@@ -232,11 +222,11 @@ def test(args, dataset):
                 if i_ >= len(rel2prob):
                     break
                 head_r_, p_ = rel2prob[i_]
-                #print("{}:\t{:.3f}".format(head_r_, p_))
+
                 if head_r_ != 'None':
                     tmp = [(head_r_, body), p_] 
                     rule_conf.append(tmp)
-            #max_head_ = head_rdict.idx2rel[np.argmax(prob_)]
+
 
 
 if __name__ == '__main__':
@@ -287,4 +277,3 @@ if __name__ == '__main__':
                 body = body.split('|')
                 msg += ", ".join(body)
                 g.write(msg + '\n')
-    print("head_coverage:", len(head_list))

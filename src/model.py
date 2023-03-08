@@ -40,12 +40,9 @@ class LSTM(nn.Module):
     
     
     def MLP(self, emb_1, emb_2):
-        #print(emb_1.size())
         emb_concat = torch.cat((emb_1, emb_2), dim=1)
-        #print(emb_concat.size())
         hid = F.relu(self.fc_1(emb_concat))
         out = self.fc_2(hid)
-        #print(out.size())
         return out
   
 
@@ -56,27 +53,13 @@ class LSTM(nn.Module):
         """
         batch_size = prob.size(0)
         idx_ = torch.LongTensor(range(self.relation_num)).repeat(batch_size, 1).to(self.device)
-        #print("idx:", idx_)
         # get all relation embedding
         relation_emb = self.emb(idx_)
-        #print("relation_emb.size():", relation_emb.size())
-        #print("body_embedding.size()", body_emb.size())
         
         relation_emb = torch.cat((relation_emb, body_emb), dim=1)
-        #print("relation_emb.size():", relation_emb.size())
         prob_ = prob.unsqueeze(1)
-        #print("prob.size()", prob_.size())
         out = prob_ @ relation_emb
-        #print(prob)
-        #print("out.size()", out.size())
-        '''
-        T = torch.zeros(1, self.emb_size)
-        for i in range(prob.size(1)):
-            p = prob[0][i]
-            T += p * relation_emb[i]    
-        print(T)
-        print(out)
-        '''
+
         return out
     
 
@@ -93,11 +76,8 @@ class LSTM(nn.Module):
         body_hid, (h,c) = self.lstm(relation_emb, hidden)
         length = body_hid.size(1)
         # P(H, B)
-        #print("relation_emb.size()", relation_emb.size())
-        #print("body_hid.size()", body_hid.size())
         for i_ in range(length-1):
             j_ = i_+1
-            #print(i_, j_)
             # MLP
             if i_ == 0:
                 emb_1 = relation_emb[:, i_, :]
@@ -126,8 +106,6 @@ class LSTM(nn.Module):
     
     def get_relation_emb(self, rel):
         return self.emb(rel)
-
-
 
 
 class RNN(nn.Module):
@@ -166,12 +144,9 @@ class RNN(nn.Module):
     
     
     def MLP(self, emb_1, emb_2):
-        #print(emb_1.size())
         emb_concat = torch.cat((emb_1, emb_2), dim=1)
-        #print(emb_concat.size())
         hid = F.relu(self.fc_1(emb_concat))
         out = self.fc_2(hid)
-        #print(out.size())
         return out
   
 
@@ -182,28 +157,14 @@ class RNN(nn.Module):
         """
         batch_size = prob.size(0)
         idx_ = torch.LongTensor(range(self.relation_num)).repeat(batch_size, 1)
-        #print("idx:", idx_)
         # get all relation embedding
         relation_emb = self.emb(idx_)
-        #print("relation_emb.size():", relation_emb.size())
-        #print("body_embedding.size()", body_emb.size())
         
         
         relation_emb = torch.cat((relation_emb, body_emb), dim=1)
-        #print("relation_emb.size():", relation_emb.size())
         prob_ = prob.unsqueeze(1)
-        #print("prob.size()", prob_.size())
         out = prob_ @ relation_emb
-        #print(prob)
-        #print("out.size()", out.size())
-        '''
-        T = torch.zeros(1, self.emb_size)
-        for i in range(prob.size(1)):
-            p = prob[0][i]
-            T += p * relation_emb[i]    
-        print(T)
-        print(out)
-        '''
+
         return out
     
 
@@ -219,11 +180,8 @@ class RNN(nn.Module):
         body_hid, (h,c) = self.lstm(relation_emb, hidden)
         length = body_hid.size(1)
         # P(H, B)
-        #print("relation_emb.size()", relation_emb.size())
-        #print("body_hid.size()", body_hid.size())
         for i_ in range(length-1):
             j_ = i_+1
-            #print(i_, j_)
             # MLP
             if i_ == 0:
                 emb_1 = relation_emb[:, i_, :]

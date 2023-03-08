@@ -35,7 +35,6 @@ class RuleDataset(Dataset):
     
     def __getitem__(self, idx):
         rel = self.idx2rel[idx]
-        # print ("idx:{}, rel:{}".format(idx,rel))
         _rules = self.rules[rel]
         path_count = np.zeros(shape=(self.e_num,self.e_num))
         for rule in _rules:
@@ -55,44 +54,6 @@ class RuleDataset(Dataset):
         head = [_[0] for _ in data]
         path_count = [_[1] for _ in data]
         return head, path_count
-
-# class RuleDataset(Dataset):
-#     def __init__(self, r2mat, rules, e_num,idx2rel, args):
-#         self.e_num = e_num
-#         self.r2mat = r2mat
-#         self.rules = rules
-#         self.idx2rel = idx2rel
-#         self.len = len(self.rules)
-#         self.args = args
-
-#     def __len__(self):
-#         return self.len
-    
-#     def __getitem__(self, idx):
-#         rel = self.idx2rel[idx]
-#         # print ("idx:{}, rel:{}".format(idx,rel))
-#         _rules = self.rules[rel]
-#         path_count = np.zeros(shape=(self.e_num,self.e_num))
-#         score_count = np.zeros(shape=(self.e_num,self.e_num))
-        
-#         for rule in _rules:
-#             head, body, conf_1, conf_2 = rule
-#             if conf_1 >=self.args.threshold:
-#                 body_adj = sparse.eye(self.e_num)
-#                 for b_rel in body:
-#                     body_adj = body_adj * self.r2mat[b_rel] 
-                
-#                 path_count+=body_adj
-#                 score_count+= body_adj * conf_1
-        
-#         return rel, path_count, score_count
-    
-#     @staticmethod
-#     def collate_fn(data):
-#         head = [_[0] for _ in data]
-#         path_count = [_[1] for _ in data]
-#         score_count = [_[2] for _ in data]
-#         return head, path_count,score_count
 
 def sortSparseMatrix(m, r, rev=True, only_indices=False):
     """ Sort a row in matrix row and return column index
@@ -143,7 +104,6 @@ def construct_rmat(idx2rel, idx2ent, ent2idx, fact_rdf):
     r2mat = {}
     # initialize rmat
     for idx, rel in idx2rel.items():
-        # mat = np.zeros(shape=(e_num, e_num))
         mat = sparse.dok_matrix((e_num, e_num))
         r2mat[rel] = mat
     # fill rmat
@@ -201,22 +161,11 @@ def kg_completion(rules, dataset, args):
     
     for epoch, sample in enumerate(rule_loader):
         heads, score_counts = sample
-        # heads, path_counts, score_counts = sample
         
         for idx in range(len(heads)):
             head = heads[idx]
-            # path_count = path_counts[idx]
             score_count = score_counts[idx]
             body2mat[head] = score_count
-            # body2mat[head] = sparse.dok_matrix(score_count.shape)
-            # body2mat[head][path_count.nonzero()] = score_count[path_count.nonzero()]/path_count[path_count.nonzero()]
-            print ("head", head)    
-            print ("nonzero", len(np.nonzero(body2mat[head])[0]))
-        
-    
-    # for r in body2mat:
-    #     print ("body2mat", r)
-    #     print (len(np.nonzero(body2mat[r])[0]))
     
     mrr, hits_1, hits_10  = [], [], []
     
@@ -227,44 +176,20 @@ def kg_completion(rules, dataset, args):
             continue
         print ("{}\t{}\t{}".format(q_h, q_r, q_t))
         pred = np.squeeze(np.array(body2mat[q_r][ent2idx[q_h]]))
-        # pred = body2mat[q_r].todense()[ent2idx[q_h]]
-        # pred = np.array(pred).flatten()
-        
-        # pred_ranks = np.argsort(pred)[::-1]    
-        # # print ("pred_ranks",pred_ranks[:10],pred_ranks.shape) 
-        
-        # truth = gt[(q_h, q_r)]
-        # # print ("truth", truth)
-        
-        # filtered_ranks = []
-        # for i in range(len(pred_ranks)):
-        #     idx = pred_ranks[i]
-        #     if idx not in truth:
-        #         filtered_ranks.append(idx)
-        # # print ("filtered_ranks",filtered_ranks[:10],len(filtered_ranks))
-
-        # # print ("idx t",ent2idx[q_t])
-        # rank = filtered_ranks.index(ent2idx[q_t])+1
         
         
         if pred[ent2idx[q_t]]!=0:
             pred_ranks = np.argsort(pred)[::-1]    
-            # print ("pred_ranks",pred_ranks[:10],pred_ranks.shape) 
             
             truth = gt[(q_h, q_r)]
-            print ("truth", len(truth))
             truth = [t for t in truth if t!=ent2idx[q_t]]
-            print ("truth", len(truth))
-            # print ("truth", truth)
             
             filtered_ranks = []
             for i in range(len(pred_ranks)):
                 idx = pred_ranks[i]
                 if idx not in truth:
                     filtered_ranks.append(idx)
-            # print ("filtered_ranks",filtered_ranks[:10],len(filtered_ranks))
 
-            # print ("idx t",ent2idx[q_t])
             rank = filtered_ranks.index(ent2idx[q_t])+1
             
         else:
@@ -275,7 +200,6 @@ def kg_completion(rules, dataset, args):
             for i in range(len(pred)):
                 if i not in truth:
                     filtered_pred.append(pred[i])
-                    # filtered_ranks.append(pred[i])
                     
             
             n_non_zero = np.count_nonzero(filtered_pred)
@@ -308,8 +232,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default="family")
     parser.add_argument("--rule", default="family4")
-    # parser.add_argument("--data", default="fb15k-237")
-    # parser.add_argument("--rule", default="fb15k-237_3")
     parser.add_argument('--cpu_num', type=int, default=mp.cpu_count()//2)   
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--top", type=int, default=200)
@@ -317,10 +239,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print ("cpu_num:{}".format(args.cpu_num))
     dataset = Dataset(data_root='../datasets/{}/'.format(args.data), inv=True)
-    # all_rules, all_rule_heads = load_rules("../rules/{}/{}".format(args.data, args.rule))
     all_rules = {}
     all_rule_heads = []
-    # load_rules("{}".format(args.rule), all_rules, all_rule_heads)
     
     for L in range(2,4):
         file = "{}/{}_500_{}.txt".format(args.rule, args.rule, L)
@@ -329,8 +249,6 @@ if __name__ == "__main__":
     for head in all_rules:
         all_rules[head] = all_rules[head][:args.top]
     
-    # print ("all rules", all_rules)
-    # print ("all_rule_heads", all_rule_heads)
     
     fact_rdf, train_rdf, valid_rdf, test_rdf = dataset.fact_rdf, dataset.train_rdf, dataset.valid_rdf, dataset.test_rdf
 
@@ -344,24 +262,18 @@ if __name__ == "__main__":
         count = feq(head, fact_rdf+valid_rdf+train_rdf)
         print("Head: {} Count: {}".format(head, count))
 
-    # Select topk rules:
-    # rules = all_rules[args.s:args.e]
-    # print_msg("Select {}-{} Rules".format(args.s, args.e))
 
     kg_completion(all_rules, dataset,args)
     
     print_msg("Stat on head and hit@1")
     for head, hits in head2hit_1.items():
-        # print(head, np.mean(hits), head2feq[head])
         print(head, np.mean(hits))
 
     print_msg("Stat on head and hit@10")
     for head, hits in head2hit_10.items():
-        # print(head, np.mean(hits), head2feq[head])
         print(head, np.mean(hits))
 
 
     print_msg("Stat on head and mrr")
     for head, mrr in head2mrr.items():
-        # print(head, np.mean(mrr), head2feq[head])
         print(head, np.mean(mrr))
