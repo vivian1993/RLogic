@@ -58,7 +58,6 @@ class RuleDataset(Dataset):
 def sortSparseMatrix(m, r, rev=True, only_indices=False):
     """ Sort a row in matrix row and return column index
     """
-    print ("type",type(m))
     d = m.getrow(r)
     s = zip(d.indices, d.data)
     sorted_s = sorted(s, key=lambda v: v[1], reverse=rev)
@@ -143,10 +142,8 @@ def kg_completion(rules, dataset, args):
     idx2ent, ent2idx = dataset.idx2ent, dataset.ent2idx
     e_num = len(idx2ent)
     # construct relation matrix (following Neural-LP)
-    r2mat = construct_rmat(idx2rel, idx2ent, ent2idx, fact_rdf+train_rdf+valid_rdf+test_rdf)
-    print ("construct rmat", len(r2mat))
-    
-    print ("construct body2mat") 
+    r2mat = construct_rmat(idx2rel, idx2ent, ent2idx, fact_rdf+train_rdf+valid_rdf)
+
     # Eval Metric
     body2mat  = {}
     
@@ -166,6 +163,7 @@ def kg_completion(rules, dataset, args):
             head = heads[idx]
             score_count = score_counts[idx]
             body2mat[head] = score_count
+
     
     mrr, hits_1, hits_10  = [], [], []
     
@@ -176,20 +174,20 @@ def kg_completion(rules, dataset, args):
             continue
         print ("{}\t{}\t{}".format(q_h, q_r, q_t))
         pred = np.squeeze(np.array(body2mat[q_r][ent2idx[q_h]]))
-        
-        
+
         if pred[ent2idx[q_t]]!=0:
             pred_ranks = np.argsort(pred)[::-1]    
             
             truth = gt[(q_h, q_r)]
             truth = [t for t in truth if t!=ent2idx[q_t]]
+
             
             filtered_ranks = []
             for i in range(len(pred_ranks)):
                 idx = pred_ranks[i]
                 if idx not in truth:
                     filtered_ranks.append(idx)
-
+                    
             rank = filtered_ranks.index(ent2idx[q_t])+1
             
         else:
@@ -231,24 +229,22 @@ def feq(relation, fact_rdf):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default="family")
-    parser.add_argument("--rule", default="family4")
+    parser.add_argument("--rule", default="family")
     parser.add_argument('--cpu_num', type=int, default=mp.cpu_count()//2)   
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--top", type=int, default=200)
     parser.add_argument("--threshold", type=float, default=0)
     args = parser.parse_args()
-    print ("cpu_num:{}".format(args.cpu_num))
     dataset = Dataset(data_root='../datasets/{}/'.format(args.data), inv=True)
     all_rules = {}
     all_rule_heads = []
-    
+   
     for L in range(2,4):
         file = "{}/{}_500_{}.txt".format(args.rule, args.rule, L)
         load_rules("{}".format(file), all_rules, all_rule_heads)
     
     for head in all_rules:
         all_rules[head] = all_rules[head][:args.top]
-    
     
     fact_rdf, train_rdf, valid_rdf, test_rdf = dataset.fact_rdf, dataset.train_rdf, dataset.valid_rdf, dataset.test_rdf
 
@@ -272,7 +268,6 @@ if __name__ == "__main__":
     print_msg("Stat on head and hit@10")
     for head, hits in head2hit_10.items():
         print(head, np.mean(hits))
-
 
     print_msg("Stat on head and mrr")
     for head, mrr in head2mrr.items():
